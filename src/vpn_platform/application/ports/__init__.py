@@ -1,0 +1,1 @@
+"""Application-facing dependency contracts."""
