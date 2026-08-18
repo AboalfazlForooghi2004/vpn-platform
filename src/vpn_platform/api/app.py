@@ -7,9 +7,9 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from vpn_platform.api.admin import admin_router
 from vpn_platform.config import Settings, get_settings
-from vpn_platform.infrastructure.db.session import create_engine
-
+from vpn_platform.infrastructure.db.session import create_engine, create_session_factory
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
@@ -28,6 +28,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.engine = engine
+    app.state.session_factory = create_session_factory(engine)
 
     @app.get("/health/live", tags=["health"])
     async def live() -> dict[str, str]:
@@ -46,5 +47,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/", include_in_schema=False)
     async def root() -> dict[str, Any]:
         return {"service": "vpn-platform", "protocol": "AmneziaWG 2.0"}
+
+    app.include_router(admin_router)
 
     return app

@@ -4,7 +4,6 @@ from uuid import UUID
 
 from vpn_platform.domain.errors import InvalidTransition
 
-
 class OrderStatus(StrEnum):
     CREATED = "CREATED"
     AWAITING_RECEIPT = "AWAITING_RECEIPT"
@@ -16,7 +15,6 @@ class OrderStatus(StrEnum):
     PROVISIONING_ERROR = "PROVISIONING_ERROR"
     REJECTED = "REJECTED"
     EXPIRED = "EXPIRED"
-
 
 _ALLOWED: dict[OrderStatus, frozenset[OrderStatus]] = {
     OrderStatus.CREATED: frozenset({OrderStatus.AWAITING_RECEIPT}),
@@ -33,6 +31,9 @@ _ALLOWED: dict[OrderStatus, frozenset[OrderStatus]] = {
     OrderStatus.EXPIRED: frozenset(),
 }
 
+def can_transition(source: OrderStatus, target: OrderStatus) -> bool:
+    """Return whether the order state machine allows ``source -> target``."""
+    return target in _ALLOWED[source]
 
 @dataclass(slots=True)
 class Order:

@@ -31,14 +31,16 @@ AmneziaWG 2.0 interface
 - مدل‌های PostgreSQL و migration اولیه
 - health API و Bot `/start`
 - job claimer مبتنی بر `FOR UPDATE SKIP LOCKED`
+- احراز هویت admin: توکن Bearer با مقایسه constant-time برای API (fail-closed) و فیلتر `AdminOnlyFilter` در Bot
+- ارزیابی تقلب رسید (hash/فایل تکراری، حجم و نوع رسانه) قبل از review ادمین
+- سوییپر انقضای سفارش در worker با قفل ردیفی `FOR UPDATE SKIP LOCKED`
 - تست‌های دامنه و CI
 
 هنوز Production-ready نیست:
 
 - driver واقعی AWG بعد از مشخص‌شدن OS/kernel VPS
 - ذخیره‌سازی رمزگذاری‌شده receipt/config
-- handler کامل سفارش و review رسید
-- احراز هویت endpointهای admin
+- handler کامل سفارش و review رسید (فعلاً فقط لیست pending در admin API)
 - usage poller و reconciliation واقعی
 - deploy/hardening نهایی VPS
 
@@ -81,6 +83,7 @@ Agent بدون `--dry-run` عمداً اجرا نمی‌شود تا driver وا�
 - فایل `.conf` یک secret است.
 - Agent management port عمومی ندارد.
 - پرداخت فقط پس از تأیید صریح ادمین به `PAID` می‌رود.
+- بدون `ADMIN_API_TOKEN` همه endpointهای `/admin/*` بسته می‌مانند (fail-closed).
 - Bot مستقیماً data plane را فراخوانی نمی‌کند.
 - profile فعال AWG immutable و migration نسخه‌دار است.
 
