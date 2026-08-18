@@ -11,6 +11,4 @@ admin_router.message.filter(AdminOnlyFilter())
 @admin_router.message(Command("admin"))
 async def admin_overview(message: Message) -> None:
     """Entry point of the admin panel; the router-level filter gates it."""
-    await message.answer(
-        "پنل مدیریت فعال است. review رسیدها فعلاً از طریق admin API انجام می‌شود."
-    )
+    await message.answer("پنل مدیریت فعال است. review رسیدها فعلاً از طریق admin API انجام می‌شود.")

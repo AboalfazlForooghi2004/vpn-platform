@@ -59,15 +59,16 @@ async def find_fingerprint_matches_batch(
     session: AsyncSession,
     *,
     pending: Sequence[PaymentReceiptModel],
-    limit: int = 500,
 ) -> Sequence[PaymentReceiptModel]:
-    """Fetch every committed receipt sharing a fingerprint with the queue.
+    """Fetch all committed receipts sharing a fingerprint with the queue.
 
-    One query for the whole page, so the review endpoint never issues one
-    query per receipt (no N+1).
+    One indexed query serves the whole bounded review page, so the endpoint
+    avoids N+1 queries. This intentionally has no global row limit: a shared
+    cap could let collisions for one fingerprint hide fraud on another queue
+    item. The admin endpoint already bounds ``pending`` to at most 200 rows.
     """
-    sha256s = [receipt.sha256 for receipt in pending]
-    file_ids = [receipt.telegram_file_unique_id for receipt in pending]
+    sha256s = sorted({receipt.sha256 for receipt in pending})
+    file_ids = sorted({receipt.telegram_file_unique_id for receipt in pending})
     if not sha256s and not file_ids:
         return []
     statement = (
@@ -79,7 +80,6 @@ async def find_fingerprint_matches_batch(
             )
         )
         .order_by(PaymentReceiptModel.submitted_at)
-        .limit(limit)
     )
     return list((await session.scalars(statement)).all())
 

@@ -4,6 +4,7 @@ from uuid import UUID, uuid4
 
 from vpn_platform.application.services.order_expiry import ExpirableOrder, ExpireOrdersService
 from vpn_platform.domain.orders import OrderStatus, can_transition
+from vpn_platform.infrastructure.db.models import OrderModel
 
 
 class FakeOrderExpiryUoW:
@@ -44,6 +45,15 @@ def test_state_machine_allows_expiry_only_from_receipt_states() -> None:
     assert not can_transition(OrderStatus.UNDER_REVIEW, OrderStatus.EXPIRED)
     assert not can_transition(OrderStatus.COMPLETED, OrderStatus.EXPIRED)
     assert not can_transition(OrderStatus.EXPIRED, OrderStatus.EXPIRED)
+
+
+def test_expiry_sweep_partial_index_is_defined() -> None:
+    indexes = {index.name: index for index in OrderModel.__table__.indexes}
+    index = indexes["ix_orders_expiry_sweep"]
+
+    assert tuple(column.name for column in index.columns) == ("status", "expires_at")
+    where = index.dialect_options["postgresql"]["where"]
+    assert str(where) == "status IN ('AWAITING_RECEIPT', 'NEEDS_NEW_RECEIPT')"
 
 
 async def test_sweep_expires_due_orders_and_writes_audit() -> None:
