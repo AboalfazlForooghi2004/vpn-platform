@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+asyncpg://vpn:vpn-dev-only@127.0.0.1:5432/vpn"
     telegram_bot_token: SecretStr | None = None
     admin_telegram_ids: str = ""
+    admin_api_token: SecretStr | None = None
     awg_agent_socket: Path = Path("/run/vpn-platform/awg-agent.sock")
     config_encryption_key: SecretStr | None = None
     receipt_storage_path: Path = Path("./runtime/receipts")

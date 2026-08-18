@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
@@ -7,13 +8,22 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncEngine
 
+from vpn_platform.api.admin import admin_router
 from vpn_platform.config import Settings, get_settings
-from vpn_platform.infrastructure.db.session import create_engine
+from vpn_platform.infrastructure.db.session import create_engine, create_session_factory
+
+logger = logging.getLogger(__name__)
+
+_MIN_ADMIN_TOKEN_LENGTH = 32
 
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     app_settings = settings or get_settings()
     engine = create_engine(app_settings.database_url)
+
+    admin_token = app_settings.admin_api_token
+    if admin_token is not None and len(admin_token.get_secret_value()) < _MIN_ADMIN_TOKEN_LENGTH:
+        logger.warning("ADMIN_API_TOKEN is shorter than %d characters", _MIN_ADMIN_TOKEN_LENGTH)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
@@ -27,7 +37,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         redoc_url=None,
         lifespan=lifespan,
     )
+    app.state.settings = app_settings
     app.state.engine = engine
+    app.state.session_factory = create_session_factory(engine)
 
     @app.get("/health/live", tags=["health"])
     async def live() -> dict[str, str]:
@@ -46,5 +58,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/", include_in_schema=False)
     async def root() -> dict[str, Any]:
         return {"service": "vpn-platform", "protocol": "AmneziaWG 2.0"}
+
+    app.include_router(admin_router)
 
     return app

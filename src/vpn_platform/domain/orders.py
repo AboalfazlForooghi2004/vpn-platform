@@ -34,6 +34,11 @@ _ALLOWED: dict[OrderStatus, frozenset[OrderStatus]] = {
 }
 
 
+def can_transition(source: OrderStatus, target: OrderStatus) -> bool:
+    """Return whether the order state machine allows ``source -> target``."""
+    return target in _ALLOWED[source]
+
+
 @dataclass(slots=True)
 class Order:
     id: UUID

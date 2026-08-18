@@ -15,6 +15,7 @@ from sqlalchemy import (
     Text,
     UniqueConstraint,
     func,
+    text,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
@@ -84,6 +85,14 @@ class OrderModel(Base):
     expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    __table_args__ = (
+        Index(
+            "ix_orders_expiry_sweep",
+            "status",
+            "expires_at",
+            postgresql_where=text("status IN ('AWAITING_RECEIPT', 'NEEDS_NEW_RECEIPT')"),
+        ),
     )
 
 
