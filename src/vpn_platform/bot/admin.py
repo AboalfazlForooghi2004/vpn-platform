@@ -3,6 +3,7 @@ from aiogram.types import TelegramObject
 
 from vpn_platform.config import get_settings
 
+
 class AdminOnlyFilter(BaseFilter):
     """Fail-closed admin gate: an empty ADMIN_TELEGRAM_IDS allowlist denies everyone."""
 

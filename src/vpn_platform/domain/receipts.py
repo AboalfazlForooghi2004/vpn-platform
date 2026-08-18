@@ -13,11 +13,13 @@ from uuid import UUID
 MAX_RECEIPT_BYTES = 10 * 1024 * 1024
 ALLOWED_MIME_TYPES = frozenset({"image/jpeg", "image/png", "image/webp", "application/pdf"})
 
+
 class ReceiptFlag(StrEnum):
     DUPLICATE_HASH = "DUPLICATE_HASH"
     DUPLICATE_TELEGRAM_FILE = "DUPLICATE_TELEGRAM_FILE"
     OVERSIZED = "OVERSIZED"
     UNSUPPORTED_MEDIA_TYPE = "UNSUPPORTED_MEDIA_TYPE"
+
 
 @dataclass(frozen=True, slots=True)
 class ReceiptFingerprint:
@@ -26,6 +28,7 @@ class ReceiptFingerprint:
     payment_id: UUID
     sha256: str
     telegram_file_unique_id: str
+
 
 @dataclass(frozen=True, slots=True)
 class ReceiptAssessment:
@@ -40,6 +43,7 @@ class ReceiptAssessment:
     def needs_admin_attention(self) -> bool:
         return bool(self.flags)
 
+
 def assess_receipt(
     *,
     sha256: str,
@@ -50,10 +54,11 @@ def assess_receipt(
 ) -> ReceiptAssessment:
     """Flag risky receipts before an admin sees them.
 
-    ``existing`` holds fingerprints of previously stored receipts (the caller
-    excludes the receipt being assessed). A receipt identical in content hash
-    or Telegram file id to an earlier submission is a fraud signal: the same
-    card-to-card receipt must never back two different payments.
+    ``existing`` holds fingerprints of previously stored receipts. The caller
+    excludes the receipt being assessed and normally other receipts of the
+    same payment too: re-submission is not fraud. A receipt identical in
+    content hash or Telegram file id to an earlier submission for a
+    *different* payment is the core fraud signal in the card-to-card flow.
     """
     flags: set[ReceiptFlag] = set()
     duplicate_ids: list[UUID] = []

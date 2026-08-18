@@ -1,8 +1,10 @@
 from datetime import UTC, datetime, timedelta
+from types import TracebackType
 from uuid import UUID, uuid4
 
 from vpn_platform.application.services.order_expiry import ExpirableOrder, ExpireOrdersService
 from vpn_platform.domain.orders import OrderStatus, can_transition
+
 
 class FakeOrderExpiryUoW:
     def __init__(self, orders: list[ExpirableOrder]) -> None:
@@ -14,7 +16,12 @@ class FakeOrderExpiryUoW:
     async def __aenter__(self) -> "FakeOrderExpiryUoW":
         return self
 
-    async def __aexit__(self, exc_type: object, exc: object, traceback: object) -> None:
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         return None
 
     async def lock_due_orders(self, *, now: datetime, limit: int) -> list[ExpirableOrder]:
@@ -29,6 +36,7 @@ class FakeOrderExpiryUoW:
     async def commit(self) -> None:
         self.committed = True
 
+
 def test_state_machine_allows_expiry_only_from_receipt_states() -> None:
     assert can_transition(OrderStatus.AWAITING_RECEIPT, OrderStatus.EXPIRED)
     assert can_transition(OrderStatus.NEEDS_NEW_RECEIPT, OrderStatus.EXPIRED)
@@ -36,6 +44,7 @@ def test_state_machine_allows_expiry_only_from_receipt_states() -> None:
     assert not can_transition(OrderStatus.UNDER_REVIEW, OrderStatus.EXPIRED)
     assert not can_transition(OrderStatus.COMPLETED, OrderStatus.EXPIRED)
     assert not can_transition(OrderStatus.EXPIRED, OrderStatus.EXPIRED)
+
 
 async def test_sweep_expires_due_orders_and_writes_audit() -> None:
     now = datetime.now(UTC)
@@ -53,6 +62,7 @@ async def test_sweep_expires_due_orders_and_writes_audit() -> None:
         ("ORDER_EXPIRED", str(also_due.id)),
     ]
     assert uow.committed
+
 
 async def test_sweep_skips_orders_that_left_an_expirable_state() -> None:
     now = datetime.now(UTC)

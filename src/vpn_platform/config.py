@@ -4,6 +4,7 @@ from pathlib import Path
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
@@ -28,6 +29,7 @@ class Settings(BaseSettings):
         return frozenset(
             int(value.strip()) for value in self.admin_telegram_ids.split(",") if value.strip()
         )
+
 
 @lru_cache(maxsize=1)
 def get_settings() -> Settings:

@@ -1,5 +1,6 @@
 import hmac
 
+
 def token_matches(provided: str | None, expected: str | None) -> bool:
     """Constant-time admin token check that fails closed.
 

@@ -3,6 +3,7 @@
 from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from types import TracebackType
 from typing import Protocol
 from uuid import UUID
 
@@ -13,6 +14,7 @@ EXPIRABLE_STATUSES: tuple[OrderStatus, ...] = (
     OrderStatus.NEEDS_NEW_RECEIPT,
 )
 
+
 @dataclass(frozen=True, slots=True)
 class ExpirableOrder:
     """Minimal locked row view the sweeper needs to decide on expiry."""
@@ -21,10 +23,16 @@ class ExpirableOrder:
     status: OrderStatus
     expires_at: datetime
 
+
 class OrderExpiryUnitOfWork(Protocol):
     async def __aenter__(self) -> "OrderExpiryUnitOfWork": ...
 
-    async def __aexit__(self, exc_type: object, exc: object, traceback: object) -> None: ...
+    async def __aexit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None: ...
 
     async def lock_due_orders(self, *, now: datetime, limit: int) -> Sequence[ExpirableOrder]: ...
 
@@ -34,6 +42,7 @@ class OrderExpiryUnitOfWork(Protocol):
 
     async def commit(self) -> None: ...
 
+
 @dataclass(frozen=True, slots=True)
 class ExpirySweepResult:
     expired_order_ids: tuple[UUID, ...]
@@ -41,6 +50,7 @@ class ExpirySweepResult:
     @property
     def expired_count(self) -> int:
         return len(self.expired_order_ids)
+
 
 class ExpireOrdersService:
     """Expire due orders in small locked batches; safe to run every worker tick."""

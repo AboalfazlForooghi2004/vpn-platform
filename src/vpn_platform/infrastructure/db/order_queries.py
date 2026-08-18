@@ -10,6 +10,7 @@ from vpn_platform.application.services.order_expiry import EXPIRABLE_STATUSES, E
 from vpn_platform.domain.orders import OrderStatus
 from vpn_platform.infrastructure.db.models import AuditLogModel, OrderModel
 
+
 async def lock_expired_orders(
     session: AsyncSession,
     *,
@@ -28,6 +29,7 @@ async def lock_expired_orders(
         .with_for_update(skip_locked=True)
     )
     return list((await session.scalars(statement)).all())
+
 
 class SqlAlchemyOrderExpiryUoW:
     """Relational implementation of the order-expiry unit of work.

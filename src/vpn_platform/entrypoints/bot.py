@@ -2,6 +2,7 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 
+from vpn_platform.bot.admin_router import admin_router
 from vpn_platform.bot.router import router
 from vpn_platform.config import get_settings
 
@@ -16,6 +17,7 @@ async def main() -> None:
 
     bot = Bot(token=token)
     dispatcher = Dispatcher()
+    dispatcher.include_router(admin_router)
     dispatcher.include_router(router)
     try:
         await dispatcher.start_polling(bot)
